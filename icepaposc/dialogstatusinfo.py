@@ -1,21 +1,23 @@
-from PyQt4 import QtGui
-from ui.ui_dialogstatusinfo import Ui_DialogStatusInfo
-#from lib_icepapcms import IcepapController
-from pyIcePAP import EthIcePAPController
-from PyQt4 import QtCore, Qt
+
 import re
+from PyQt5 import QtWidgets, uic,QtCore
+
+from pkg_resources import resource_filename
 
 
-class DialogStatusInfo(QtGui.QDialog):
+class DialogStatusInfo(QtWidgets.QDialog):
 
     def __init__(self, parent, icepapsys, addr):
-        QtGui.QDialog.__init__(self, parent)
-        self.ui = Ui_DialogStatusInfo()
+        QtWidgets.QDialog.__init__(self, parent)
+        ui_filename = resource_filename('icepaposc.ui',
+                                        'dialog_settings.ui')
+        self.ui = self
+        uic.loadUi(ui_filename, baseinstance=self.ui)
+
         #self.driver = IcepapController().iPaps[drv.icepapsystem_name]
         self.icepapsys=icepapsys
         self.driver = icepapsys[addr]
         self.icepapAddress = icepapsys[addr].addr
-        self.ui.setupUi(self)
         #self.setWindowTitle('Status Info  |  ' + drv.icepapsystem_name + '  |  ' + str(self.icepapAddress) + ' ' + drv.name)
         self.setWindowTitle('Status Info  |  ' + self.driver._ctrl._host + '  |  ' + str(self.icepapAddress) + ' ' + self.driver.name)
         self.show()
@@ -63,7 +65,7 @@ class DialogStatusInfo(QtGui.QDialog):
         try:
             #val = self.driver.getVStatus(self.icepapAddress)
             val = self.driver.vstatus
-        except Exception, e:
+        except Exception as e:
             print(e)
         self.ui.textBrowser.setText(val)
 
@@ -80,7 +82,7 @@ class DialogStatusInfo(QtGui.QDialog):
 
             #val = self.ui.txt1Command.text()
             comm = "" + str(self.ui.txt1Command.text())
-            print comm
+            print(comm)
             #val = self.driver.getVStatus(self.icepapAddress)
             val = self.driver.vstatus
             #val = self.driver.sendWriteReadCommand(comm)
@@ -88,8 +90,8 @@ class DialogStatusInfo(QtGui.QDialog):
             #val = IcepapController().iPaps[self.icepap_driver.icepapsystem_name].
             val = ' '.join(val)
             val= comm.upper() + " " + val
-            print val
-        except Exception, e:
+            print(val)
+        except Exception as e:
             print(e)
         self.ui.textBrowser.setText(comm + "\n" + val)
 
@@ -113,7 +115,7 @@ class DialogStatusInfo(QtGui.QDialog):
                     if val0 == '': val0 = 'noname'
                     txt = txt + '%s '%driver + '%s '%val0 + '%s '%val1 + '%s '%val2 + '%s '%val3 + '%s '%val4 + '%s '%val5 + '\n'
                     self.ui.textBrowser.setText(txt)
-                except Exception, e:
+                except Exception as e:
                     print(e)
         elif sel == '?ver info':
             #for driver in self.driver.getDriversAlive():
@@ -123,7 +125,7 @@ class DialogStatusInfo(QtGui.QDialog):
                     val = self.getVersionInfoDict(driver)
                     txt = txt + '%s '%driver + str(val) + '\n'
                     self.ui.textBrowser.setText(txt)
-                except Exception, e:
+                except Exception as e:
                     print(e)
             self.ui.textBrowser.setText(txt)
         elif sel == 'm ?ver info':
@@ -132,7 +134,7 @@ class DialogStatusInfo(QtGui.QDialog):
                     val = self.getVersionInfoDict(contr)
                     txt = txt + '%s '%contr + str(val) + '\n'
                     self.ui.textBrowser.setText(txt)
-                except Exception, e:
+                except Exception as e:
                     print(e)
             self.ui.textBrowser.setText(txt)
         elif sel.startswith('?vstatus') and len(sel_split) == 2:
@@ -147,11 +149,11 @@ class DialogStatusInfo(QtGui.QDialog):
                         if sel_split[1] in l:
                             txt = txt + '%s '%driver + l + '\n'
                     self.ui.textBrowser.setText(txt)
-                except Exception, e:
+                except Exception as e:
                     print(e)
             self.ui.textBrowser.setText(txt)
         elif sel.startswith('m '):
-            print 'master'
+            print('master')
             contr_comm = sel.replace('m ', '')
             for contr in self.getRacksAlive():
                 try:
@@ -162,7 +164,7 @@ class DialogStatusInfo(QtGui.QDialog):
                     val= comm.upper() + " " + val
                     txt = txt + '%s '%contr + str(val) + '\n'
                     self.ui.textBrowser.setText(txt)
-                except Exception, e:
+                except Exception as e:
                     print(e)
             self.ui.textBrowser.setText(txt)
         else:
@@ -174,7 +176,7 @@ class DialogStatusInfo(QtGui.QDialog):
                     val= comm.upper() + " " + val
                     txt = txt + '%s '%driver + str(val) + '\n'
                     self.ui.textBrowser.setText(txt)
-                except Exception, e:
+                except Exception as e:
                     print(e)
             self.ui.textBrowser.setText(txt)
 

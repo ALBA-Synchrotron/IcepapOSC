@@ -21,19 +21,19 @@ import numpy as np
 import collections
 import time
 import datetime
-from dialogstatusinfo import DialogStatusInfo
-from pyIcePAP.backups import IcePAPBackup
+
 import os
 
 
-from PyQt5 import QtWidgets, Qt, QtCore, uic
+from PyQt5 import QtWidgets, Qt, QtCore, uic, QtGui
+from PyQt5.QtGui import QColor
 from pkg_resources import resource_filename
 from .collector import Collector
 from .dialog_settings import DialogSettings
 from .settings import Settings
 from .axis_time import AxisTime
 from .curve_item import CurveItem
-
+from .dialogstatusinfo import DialogStatusInfo
 
 class WindowMain(QtWidgets.QMainWindow):
     """A dialog for plotting IcePAP signals."""
@@ -79,7 +79,7 @@ class WindowMain(QtWidgets.QMainWindow):
         #pg.setConfigOption('background', '#D0D0D0')
         pg.setConfigOption('background', 'w')
         pg.setConfigOption('foreground', 'k')
-        self.fgcolor=QColor(0, 0, 0)
+        self.fgcolor = QColor(0, 0, 0)
 
         # Set up the plot area.
         self.plot_widget = pg.PlotWidget()
@@ -302,7 +302,7 @@ class WindowMain(QtWidgets.QMainWindow):
         else:
             return Qt.SolidLine
 
-     def _ESYNC_button_clicked(self):
+    def _ESYNC_button_clicked(self):
         addr = int(self.ui.cbDrivers.currentText())
         try:
             self.collector.icepap_system[addr].esync()
@@ -311,7 +311,7 @@ class WindowMain(QtWidgets.QMainWindow):
             raise Exception(msg)
         print("esynced")
 
-    def _add_signal(self, driver_addr, signal_name, y_axis, auto_save=False):
+    def _add_signal(self, driver_addr, signal_name, y_axis, linecolor, linestyle, linemarker):
         """
         Adds a new curve to the plot area.
 
@@ -348,6 +348,7 @@ class WindowMain(QtWidgets.QMainWindow):
         self.ui.lvActiveSig.item(index).setBackground(Qt.QColor(0, 0, 0))
         self._update_plot_axes_labels()
         self._update_button_status()
+        auto_save=False
         if auto_save:
             self._auto_save(True)
 
@@ -468,17 +469,14 @@ class WindowMain(QtWidgets.QMainWindow):
         self._add_signal(drv_addr, 'StatReady', 3, QColor(0, 255, 255), Qt.DotLine, '')
         self._add_signal(drv_addr, 'StatMoving', 3, QColor(255, 192, 203), Qt.DotLine, '')
         self._add_signal(drv_addr, 'StatSettling', 3, QColor(255, 255, 0), Qt.DotLine, '')
-
-        self._add_signal(drv_addr, 'StatOutofwin', 3, True)
-
-        # self._add_signal(drv_addr, 'StatOutofwin', 3, QColor(128, 0, 0), Qt.DotLine, '')
-        # self._add_signal(drv_addr, 'StatWarning', 3, QColor(0, 128, 0), Qt.DotLine, '')
+        self._add_signal(drv_addr, 'StatOutofwin', 3, QColor(128, 0, 0), Qt.DotLine, '')
+        self._add_signal(drv_addr, 'StatWarning', 3, QColor(0, 128, 0), Qt.DotLine, '')
         self._add_signal(drv_addr, 'StatStopcode', 3, QColor(255, 0, 0), Qt.DotLine, '')
-        # self.view_boxes[0].enableAutoRange(axis=self.view_boxes[0].YAxis)
-        # self.view_boxes[1].disableAutoRange(axis=self.view_boxes[1].YAxis)
-        # self.view_boxes[1].setYRange(-30, 70, padding=0)
-        # self.view_boxes[2].disableAutoRange(axis=self.view_boxes[2].YAxis)
-        # self.view_boxes[2].setYRange(-1, 20, padding=0)
+        self.view_boxes[0].enableAutoRange(axis=self.view_boxes[0].YAxis)
+        self.view_boxes[1].disableAutoRange(axis=self.view_boxes[1].YAxis)
+        self.view_boxes[1].setYRange(-30, 70, padding=0)
+        self.view_boxes[2].disableAutoRange(axis=self.view_boxes[2].YAxis)
+        self.view_boxes[2].setYRange(-1, 20, padding=0)
 
     def _signals_currents(self):
         """Display a specific set of curves."""
@@ -486,14 +484,12 @@ class WindowMain(QtWidgets.QMainWindow):
         drv_addr = int(self.ui.cbDrivers.currentText())
         self._add_signal(drv_addr, 'PosAxis', 1, QColor(255, 0, 0), Qt.SolidLine, '')
         self._add_signal(drv_addr, 'MeasI', 2, QColor(0, 255, 0), Qt.SolidLine, '')
-
-        self._add_signal(drv_addr, 'MeasVm', 3, True)
-        # self._add_signal(drv_addr, 'MeasVm', 3, QColor(0, 127, 255), Qt.SolidLine, '')
-        # # Ajust plot axis
-        # self.view_boxes[0].enableAutoRange(axis=self.view_boxes[0].YAxis)
-        # self.view_boxes[1].disableAutoRange(axis=self.view_boxes[1].YAxis)
-        # self.view_boxes[1].setYRange(-9, 10, padding=0)
-        # self.view_boxes[2].enableAutoRange(axis=self.view_boxes[2].YAxis)
+        self._add_signal(drv_addr, 'MeasVm', 3, QColor(0, 127, 255), Qt.SolidLine, '')
+        # Ajust plot axis
+        self.view_boxes[0].enableAutoRange(axis=self.view_boxes[0].YAxis)
+        self.view_boxes[1].disableAutoRange(axis=self.view_boxes[1].YAxis)
+        self.view_boxes[1].setYRange(-9, 10, padding=0)
+        self.view_boxes[2].enableAutoRange(axis=self.view_boxes[2].YAxis)
 
     def _signals_target(self):
         """Display a specific set of curves."""
@@ -520,7 +516,8 @@ class WindowMain(QtWidgets.QMainWindow):
                                      padding=0)
 
     def _import_signal_set(self):
-        fname= QFileDialog.getOpenFileName(self,"Import Signal Set", filter="Signal Set Files Files (*.lst);;All Files (*)")
+        fname= QtWidgets.QFileDialog.getOpenFileName(self,"Import Signal Set",
+                                            filter="Signal Set Files Files (*.lst);;All Files (*)")
         if fname:
             self._remove_all_signals()
             drv_addr = int(self.ui.cbDrivers.currentText())
@@ -537,7 +534,8 @@ class WindowMain(QtWidgets.QMainWindow):
 
 
     def _export_signal_set(self):
-        fname= QFileDialog.getSaveFileName(self,"Export Signal Set", "SignalSet.lst", filter="Signal Set Files Files (*.lst);;All Files (*)")
+        fname= QtWidgets.QFileDialog.getSaveFileName(self,"Export Signal Set",
+                                            "SignalSet.lst", filter="Signal Set Files Files (*.lst);;All Files (*)")
         if fname:
             with open(fname,'w') as f:
                 for ci in self.curve_items:
@@ -595,7 +593,8 @@ class WindowMain(QtWidgets.QMainWindow):
         if not self.curve_items:
             return
         capt = "Save to csv file"
-        fn = QFileDialog.getSaveFileName(caption=capt, filter="*.csv")
+        fn = QtWidgets.QFileDialog.getSaveFileName(caption=capt,
+                                                   filter="*.csv")
         if not fn:
             return
         if fn[-4:] != ".csv":
@@ -605,7 +604,7 @@ class WindowMain(QtWidgets.QMainWindow):
         except Exception as e:
             msg = 'Failed to open/create file: {}\n{}'.format(fn, e)
             print(msg)
-            QMessageBox.critical(None, 'File Open Failed', msg)
+            QtWidgets.QMessageBox.critical(None, 'File Open Failed', msg)
             return
         self._create_csv_file(f)
         f.close()
@@ -635,7 +634,8 @@ class WindowMain(QtWidgets.QMainWindow):
 
     def _icepap_backup(self):
         default_fname=os.path.expanduser("~/.icepapcms/{}_{}.ini".format(str(self.backup._host),datetime.datetime.today().strftime("%Y%m%d_%H%M%S")))
-        fname= str(QFileDialog.getSaveFileName(self,"Save Backup",default_fname,"Backup Files (*.ini);;All Files (*)"))
+        fname= str(QtWidgets.QFileDialog.getSaveFileName(self,"Save Backup",
+                                                default_fname,"Backup Files (*.ini);;All Files (*)"))
         if fname:
             self.backup.do_backup(fname)
 
@@ -829,7 +829,7 @@ class WindowMain(QtWidgets.QMainWindow):
                 self.step_ini = step_now
                 self.enc_ini = enc_now
                 self.ecpmt_just_enabled = False
-                print self.step_ini, self.enc_ini
+                print(self.step_ini, self.enc_ini)
             #if self.ui.chkEctsTurn.isChecked():
             #print "upd"
             if (step_now - self.step_ini) != 0:
