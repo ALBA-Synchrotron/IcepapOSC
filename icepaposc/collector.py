@@ -67,7 +67,7 @@ class IcePAPDescriptor:
              ("EinAux", self._getter_einaux),
              ("EinPos", self._getter_einpos),
              ("InpAux", self._getter_inpaux),
-             ("InpPos", self._getter_inpos),
+             ("InpPos", self._getter_inppos),
             ]
         )
         self.host = host
