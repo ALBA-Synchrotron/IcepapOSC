@@ -61,7 +61,14 @@ class IcePAPDescriptor:
              ('MeasIb', self._getter_meas_ib),
              ('MeasVm', self._getter_meas_vm),
              ('VelCurrent', self._getter_vel_current),
-             ('VelMotor', self._getter_vel_motor)]
+             ('VelMotor', self._getter_vel_motor),
+             ("SyncAux", self._getter_syncaux),
+             ("SyncPos", self._getter_syncpos),
+             ("EinAux", self._getter_einaux),
+             ("EinPos", self._getter_einpos),
+             ("InpAux", self._getter_inpaux),
+             ("InpPos", self._getter_inpos),
+            ]
         )
         self.host = host
         self.port = port
@@ -274,6 +281,24 @@ class IcePAPDescriptor:
         x = self.icepap_system[addr].get_velocity(vtype='MOTOR')
         x = x * self.poscorr_a
         return x
+
+    def _getter_syncaux(self, addr):
+        return float(self.icepap_system[addr].send_cmd("?isg ?syncval")[-1])
+
+    def _getter_syncpos(self, addr):
+        return float(self.icepap_system[addr].send_cmd("?isg ?syncval")[-2])
+
+    def _getter_einaux(self, addr):
+        return float(self.icepap_system[addr].send_cmd("?isg ?encval")[-1])
+
+    def _getter_einpos(self, addr):
+        return float(self.icepap_system[addr].send_cmd("?isg ?encval")[-2])
+
+    def _getter_inpaux(self, addr):
+        return float(self.icepap_system[addr].send_cmd("?isg ?inpval")[-1])
+
+    def _getter_inppos(self, addr):
+        return float(self.icepap_system[addr].send_cmd("?isg ?inpval")[-2])
 
 class Collector:
     """Feeds a subscriber with collected IcePAP signal data."""
