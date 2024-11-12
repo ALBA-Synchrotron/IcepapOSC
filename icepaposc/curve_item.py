@@ -211,6 +211,10 @@ class CurveItem:
             delta_t = time_max - time_min
             t = time_val - time_min
             idx = int((t / delta_t) * len(self.array_time))
+            if idx >= len(self.array_time):
+                idx = len(self.array_time) - 1
+            if idx < 0:
+                idx = 0
             while self.array_time[idx] > time_val:
                 idx -= 1
             while self.array_time[idx] < time_val:
